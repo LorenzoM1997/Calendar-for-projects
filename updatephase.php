@@ -1,136 +1,85 @@
-<html>
-    <head>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-        <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
-        <style>
-        
-            .main{
-                width:94%;
-                margin:3%;
-            }
-            
-            .card{
-                width:800px;
-                margin-left:auto;
-                margin-right:auto;
-            }
-            .bar{
-                height:40px;
-                border:1px solid #bbbbbb;
-                float: left;
-                margin: 0;
-                margin-bottom: 20px;
-                border-left:0px;
-                border-right:1px solid #bbbbbb;
-                text-align:center;
-                padding-top: 4px;
-            }
-            .top_bar{
-                 height:20px;
-                border:1px solid black;
-                border-left:0px;
-                float: left;
-                margin-bottom: 10px;
-                border-bottom:0px;
-                text-align:center;
-            }
-            .middle_bar{
-                height:26px;
-                border:1px solid #bbbbbb;
-                border-left:0px;
-                float: left;
-                margin-bottom: 14;
-                border-bottom:0px;
-                text-align:center;
-            }
-            .finished_phase{
-                border-bottom:2px solid #bbbbbb;
-                width:100%;
-                float:left;
-                height:60px;
-                padding-top:10px;
-            }
-            .first{
-                border-left:1px solid #bbbbbb;
-                border-radius:8px 0px 0px 8px;
-            }
-            .first_top{
-                border-left:1px solid black;
-            }
-            .first_middle{
-                border-left:1px solid #bbbbbb;
-            }
-            .last{
-                border-radius:0px 8px 8px 0px;
-            }
-            .green{
-                background-color: green;
-                color: white;
-            }
-            .red{
-                background-color: red;
-                color:white;
-            }
-            .gray{
-                background-color: #eeeeee;
-            }
-        </style>
-    </head>
-    
-    <?php
-    include('db.php');
-    
-    function isWeekend($date) {
+<?php
+
+$completeness = strval($_GET['complete']);
+$id = strval($_GET['id']);
+$limit = strval($_GET['i']);  
+
+include('db.php');
+
+ function isWeekend($date) {
         return (date('N', strtotime($date)) >= 6);
     }
-    ?>
+
+if ($completeness == '1'){
+    $myphases = $mysqli->query("SELECT * FROM `fasi` WHERE `fasi`.`id` = '".$id."'");
+    $phase = $myphases->fetch_assoc();
+    if ($phase['end'] < date("Y-m-d")){
+        $mydata = $mysqli->query("UPDATE `fasi` SET `complete` = '1' WHERE `fasi`.`id` = '".$id."'");
+    }
+    else{
+        $datetime1 = date_create(date("Y-m-d"));
+        $datetime2 = date_create($phase['end']);     
+        $interval = date_diff($datetime1, $datetime2);
+        $intervallo = ''.$interval->format("%a");
+        
+        $mydata = $mysqli->query("UPDATE `fasi` SET `complete` = '1', end = '".date("Y-m-d")."' WHERE `fasi`.`id` = '".$id."'");
+        
+        $phases_to_update = $mysqli->query("SELECT * FROM `fasi` WHERE `fasi`.`id_project` = '".$phase['id_project']."' AND start >= '".date("Y-m-d")."'ORDER BY start ASC");
+        $num_phases_to_update = $phases_to_update->num_rows;
+        
+        for ($i = 0; $i< $num_phases_to_update;$i++){
+            $phase_to_up = $phases_to_update->fetch_assoc();
+            
+            $mydata = $mysqli->query("UPDATE `fasi` SET start = '".($day = date("Y-m-d", strtotime($phase_to_up['start'] . ' -'.$intervallo.' day')))."', end = '".($day = date("Y-m-d", strtotime($phase_to_up['end'] . ' -'.$intervallo.' day')))."' WHERE `fasi`.`id` = '".$phase_to_up['id']."'");
+            
+        }
+        
+    }
     
-    <body>
-        <div class="main">
-            <form action="new_project.php" method="post">
-                <div class="card">
-                    <div class="card-block">
-                        <div class="form-group">
-                            <label for="title">Titolo progetto</label>
-                            <input type="text" name="title" class="form-control" id="title" aria-describedby="emailHelp" placeholder="Inserisci titolo">
-                        </div>
-                        <div class="form-group">
-                            <label for="description">Descrizione</label>
-                            <textarea class="form-control" name="description" id="description" rows="3"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Crea progetto</button>
-                    </div>
-                </div>
-            </form>
+}
+else{
+    $end = strval($_GET['end']);
+   
+    $mydata = $mysqli->query("SELECT * FROM `fasi` WHERE `fasi`.`id` = ".$id."");
+    $main_phase = $mydata->fetch_assoc();
+    
+    $datetime1 = date_create($main_phase['end']);
+    $datetime2 = date_create($end);     
+    $interval = date_diff($datetime1, $datetime2);
+    $intervallo = ''.$interval->format("%a");
+    
+    $mydata = $mysqli->query("UPDATE `fasi` SET `end` = '".$end."', WHERE `fasi`.`id` = ".$id."");
+    
+    $phases_to_update = $mysqli->query("SELECT * FROM `fasi` WHERE `fasi`.`id_project` = '".$main_phase['id_project']."' AND start > '".$main_phase['start']."'ORDER BY start ASC");
+    $num_phases_to_update = $phases_to_update->num_rows;
+        
+    for ($i = 0; $i< $num_phases_to_update;$i++){
+        $phase_to_up = $phases_to_update->fetch_assoc();
             
-            <div id="accordion" role="tablist" aria-multiselectable="true">
+        $mydata = $mysqli->query("UPDATE `fasi` SET start = '".(date("Y-m-d", strtotime($phase_to_up['start'] . ' +'.$intervallo.' day')))."', end = '".(date("Y-m-d", strtotime($phase_to_up['end'] . ' -'.$intervallo.' day')))."' WHERE `fasi`.`id` = '".$phase_to_up['id']."'");
             
-            <?php
-            
-                 $mydata = $mysqli->query("SELECT * from projects");
+    }
+    
+}
 
-                $num_row = $mydata->num_rows;
+ $myphases = $mysqli->query("SELECT * FROM `fasi` WHERE `fasi`.`id` = '".$id."'");
+$phase = $myphases->fetch_assoc();
 
-                //for every project in the selection
-                for ($i = 0;$i <$num_row; $i++){
+$myphas = $mysqli->query("SELECT * FROM `fasi` WHERE `id_project` = '".$phase['id_project']."' AND complete = '0'");
+$num_phas = $myphas->num_rows;
 
-                $row = $mydata->fetch_assoc();
-                    
-                echo "
-                    <div class=\"card\">
-                        <div class=\"card-header\" role=\"tab\" id=\"headingOne\">
-                        <h5 class=\"mb-0\">
-                            <a data-toggle=\"collapse\" data-parent=\"#accordion\" href=\"#collapse".$i."\" aria-expanded=\"true\" aria-controls=\"collapseOne\">
-                            ".$row['nome']."
-                            </a>
-                        </h5>
-                        </div>";
-                    
-                echo "
-                    <div id=\"collapse".$i."\" class=\"collapse\" role=\"tabpanel\" aria-labelledby=\"headingOne\">
-                        <div id='txthint".$i."' class=\"card-block\">";
+if($num_phas == 0){
+    $mydata = $mysqli->query("DELETE FROM `projects` WHERE `projects`.`id` = '".$phase['id_project']."'");
+    $mydata = $mysqli->query("DELETE FROM `fasi` WHERE `id_project` = '".$phase['id_project']."'");
+}
+
+$mydata = $mysqli->query("SELECT * from projects");
+
+for ($i = 0; $i < $limit; $i++){
+    $row = $mydata->fetch_assoc();
+}
+
+$row = $mydata->fetch_assoc();
                             
                             //calculate the total interval of the project, knowing all the phases which take part on it
                             $myphases = $mysqli->query("SELECT * from fasi WHERE id_project = '".$row['id']."' ORDER by start ASC");
@@ -209,7 +158,12 @@
                                     else if($j == $num_phases - 1){
                                         echo " last";
                                     }
-                                    echo " green";
+                                    if ($phase['complete']== 1){
+                                        echo " green";
+                                    }
+                                    else{
+                                        echo " red";
+                                    }
                                     echo "' style='width:".(99*(date_diff(date_create($phase['start']), date_create($phase['end']))->format('%a')+1)/$max)."%'>";
                                     echo "</div>";
                                 }
@@ -252,9 +206,8 @@
                             //calculate next deadline and display it
                             for ($j = 0;$j <$num_phases; $j++){
                                 $phase = $myphases->fetch_assoc();
-                                $next_deadline = "Ultima scadenza già passata";
                                 if (date("Y-m-d")>=$phase['start'] && date("Y-m-d")<=$phase['end']){
-                                    $next_deadline = $phase['name'].", fra ".date_diff(date_create(date("Y-m-d")), date_create($phase['end']))->format('%a')." giorni";
+                                    $next_deadline = $phase['name'].", fra ".date_diff(date_create(date("Y-m-d")), date_create($phase['end']))->format('%a');
                                 }
                                 if (date("Y-m-d")>=$phase['start'] && $phase['complete']==0){
                                     echo "<div class='finished_phase'>";
@@ -278,7 +231,7 @@
                                                 </div>
                                                 <div class=\"modal-footer\">
                                                     <button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Close</button>
-                                                    <button type=\"button\" onclick=\"updatephase('0','".$phase['id']."','".$i."')\" class=\"btn btn-primary\">Save changes</button>
+                                                    <button type=\"button\"  class=\"btn btn-primary\">Save changes</button>
                                                 </div>
                                             </div>
                                         </div>";
@@ -286,7 +239,7 @@
                                 }
                             }
                             
-                            echo "<br><b>PROSSIMA SCADENZA</b>: ".$next_deadline."<br><br>"; 
+                            echo "<br><b>PROSSIMA SCADENZA</b>: ".$next_deadline." giorni<br><br>"; 
                             }
                             //form to insert new phase of the project
                              echo "<form action=\"new_phase.php\" method=\"post\">
@@ -321,37 +274,6 @@
                                     </div>
                                     <button type=\"submit\" class=\"btn btn-success\">Crea</button>
 
-                            </form>
-                        </div>
-                    </div>
-                </div>";
-               
-                }
-                
-            ?>
-            </div>
-        </div>
-        <script>
-            function updatephase(completeness,id,id_proj) {
-                if (window.XMLHttpRequest) {
-                    xmlhttp = new XMLHttpRequest();
-                } else {
-                    xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-                }
-                xmlhttp.onreadystatechange = function() {
-                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                        document.getElementById("txthint"+id_proj).innerHTML = xmlhttp.responseText;
-                    }
-                };
-                var new_end_date = document.getElementById("update_end").value;
-                if (completeness == '1'){
-                    xmlhttp.open("GET","updatephase.php?complete="+completeness+"&id="+id+"&i="+id_proj,true);
-                }
-                else{
-                    xmlhttp.open("GET","updatephase.php?complete="+completeness+"&id="+id+"&i="+id_proj+"&end="+new_end_date,true);
-                }
-                xmlhttp.send();
-            }
-        </script>
-    </body>
-</html>
+                            </form>";
+
+?>
