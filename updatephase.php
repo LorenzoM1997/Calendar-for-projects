@@ -220,13 +220,20 @@ $row = $mydata->fetch_assoc();
                                 if (date("Y-m-d")>=$phase['start'] && date("Y-m-d")<=$phase['end']){
                                     $next_deadline = $phase['name'].", fra ".date_diff(date_create(date("Y-m-d")), date_create($phase['end']))->format('%a')." giorni";
                                 }
+                                
+                                /*display the question:
+                                'is the phase 'NAME_PHASE' finished? y/n'
+                                and the button for each option
+                                */
                                 if (date("Y-m-d")>=$phase['start'] && $phase['complete']==0){
                                     echo "<div class='finished_phase'>";
                                     echo "Hai finito ".$phase['name']."?";
                                     echo "<button type=\"button\" class=\"btn btn-success\" style='margin-left:20px' onClick=\"updatephase('1','".$phase['id']."','".$i."')\">Sì</button>";
                                     echo "<button type=\"button\" class=\"btn btn-danger\" style='margin-left:20px' data-toggle=\"modal\" data-target=\"#modal".$i.$j."\">No</button>
-                                    <div class=\"modal fade\" id=\"modal".$i.$j."\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"exampleModalLabel\" aria-hidden=\"true\">
-                                        <div class=\"modal-dialog\" role=\"document\">
+                                    <div class=\"modal fade\" id=\"modal".$i.$j."\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"exampleModalLabel\" aria-hidden=\"true\">";
+                                    
+                                        //the modal open when you press 'no' at the previous question
+                                        echo "<div class=\"modal-dialog\" role=\"document\">
                                             <div class=\"modal-content\">
                                                 <div class=\"modal-header\">
                                                     <h5 class=\"modal-title\" id=\"exampleModalLabel\">".$phase['name']."</h5>
@@ -237,7 +244,7 @@ $row = $mydata->fetch_assoc();
                                                 <div class=\"modal-body\">
                                                     <label for=\"update_end\" class=\"col-5 col-form-label\">Nuova data Fine</label>
                                                     <div class=\"col-10\">
-                                                        <input class=\"form-control\" type=\"date\" name='end' id=\"update_end\">
+                                                        <input class=\"form-control\" type=\"date\" name='end' id=\"update_end\" value='".date("Y-m-d")."'>
                                                     </div>
                                                 </div>
                                                 <div class=\"modal-footer\">
@@ -253,29 +260,33 @@ $row = $mydata->fetch_assoc();
                             echo "<br><b>PROSSIMA SCADENZA</b>: ".$next_deadline." giorni<br><br>"; 
                             }
                             //form to insert new phase of the project
-                             echo "<form action=\"new_phase.php\" method=\"post\">
+                              echo "<form action=\"new_phase.php\" method=\"post\">
 
                                     <div class=\"form-group\">
                                     <input type='hidden' name='id' value='".$row['id']."'>
                                         <label for=\"title_phase\"></label>
-                                        <input type=\"text\" name=\"title_phase\" class=\"form-control\" id=\"title_phase\" aria-describedby=\"emailHelp\" placeholder=\"Inserisci titolo\">
+                                        <input type=\"text\" name=\"title_phase\" class=\"form-control\" id=\"title_phase\" aria-describedby=\"emailHelp\" placeholder=\"Inserisci nuova fase...\" required>
                                     </div>
                                     <div class=\"form-group row\">
                                         <label for=\"start\" class=\"col-2 col-form-label\">Data inizio</label>
-                                        <div class=\"col-10\">
+                                        <div class=\"col-4\">
                                         <input class=\"form-control\" type=\"date\" value='";
                                     
                                     //suggest the day after the previous phase has finished as start for new phase
                                     $myphases = $mysqli->query("SELECT * from fasi WHERE id_project = '".$row['id']."' ORDER by start DESC");
                                     $phase = $myphases->fetch_assoc();
-                                    echo date("Y-m-d", strtotime($phase['end'] . ' +1 day'));
+                                    echo date("Y-m-d", strtotime($phase['end'] . ' +1 day'))."' ";
                                     
-                                    echo "' name='start' id=\"start\">
+                                    //if is not today
+                                    if (date("Y-m-d", strtotime($phase['end'] . ' +0 day')) != date("Y-m-d")){
+                                        echo "min='";
+                                        echo date("Y-m-d", strtotime($phase['end'] . ' +1 day'))."' ";
+                                    }
+                                    
+                                    echo "name='start' id=\"start\">
                                         </div>
-                                    </div>
-                                    <div class=\"form-group row\">
                                         <label for=\"end\" class=\"col-2 col-form-label\">Data fine</label>
-                                        <div class=\"col-10\">
+                                        <div class=\"col-4\">
                                         <input class=\"form-control\" type=\"date\" value=\"";
                     
                                         //suggest the day after the suggested start as end for new phase
@@ -283,7 +294,7 @@ $row = $mydata->fetch_assoc();
                                         echo "\" name='end' id=\"end\">
                                         </div>
                                     </div>
-                                    <button type=\"submit\" class=\"btn btn-success\">Crea</button>
+                                    <center><button type=\"submit\" class=\"btn btn-primary\">Crea nuova fase</button></center>
 
                             </form>";
 
