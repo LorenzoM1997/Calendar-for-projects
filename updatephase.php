@@ -46,23 +46,30 @@ else{
     $datetime1 = date_create($main_phase['end']);
     $datetime2 = date_create($end);     
     $interval = date_diff($datetime1, $datetime2);
+    
+   
+    
     $intervallo = ''.$interval->format("%a");
     
-    $mydata = $mysqli->query("UPDATE `fasi` SET `end` = '".$end."', WHERE `fasi`.`id` = ".$id."");
+    $mydata = $mysqli->query("UPDATE `fasi` SET `end` = '".$end."' WHERE `id` = ".$id."");
     
     $phases_to_update = $mysqli->query("SELECT * FROM `fasi` WHERE `fasi`.`id_project` = '".$main_phase['id_project']."' AND start > '".$main_phase['start']."'ORDER BY start ASC");
     $num_phases_to_update = $phases_to_update->num_rows;
         
     for ($i = 0; $i< $num_phases_to_update;$i++){
         $phase_to_up = $phases_to_update->fetch_assoc();
-            
-        $mydata = $mysqli->query("UPDATE `fasi` SET start = '".(date("Y-m-d", strtotime($phase_to_up['start'] . ' +'.$intervallo.' day')))."', end = '".(date("Y-m-d", strtotime($phase_to_up['end'] . ' -'.$intervallo.' day')))."' WHERE `fasi`.`id` = '".$phase_to_up['id']."'");
-            
+        
+        if ($datetime1 > $datetime2){
+            $mydata = $mysqli->query("UPDATE `fasi` SET start = '".(date("Y-m-d", strtotime($phase_to_up['start'] . ' -'.$intervallo.' day')))."', end = '".(date("Y-m-d", strtotime($phase_to_up['end'] . ' -'.$intervallo.' day')))."' WHERE `fasi`.`id` = '".$phase_to_up['id']."'");
+        }   
+        else{
+            $mydata = $mysqli->query("UPDATE `fasi` SET start = '".(date("Y-m-d", strtotime($phase_to_up['start'] . ' +'.$intervallo.' day')))."', end = '".(date("Y-m-d", strtotime($phase_to_up['end'] . ' +'.$intervallo.' day')))."' WHERE `fasi`.`id` = '".$phase_to_up['id']."'");
+        }
     }
-    
+      
 }
 
- $myphases = $mysqli->query("SELECT * FROM `fasi` WHERE `fasi`.`id` = '".$id."'");
+$myphases = $mysqli->query("SELECT * FROM `fasi` WHERE `fasi`.`id` = '".$id."'");
 $phase = $myphases->fetch_assoc();
 
 $myphas = $mysqli->query("SELECT * FROM `fasi` WHERE `id_project` = '".$phase['id_project']."' AND complete = '0'");
@@ -206,8 +213,9 @@ $row = $mydata->fetch_assoc();
                             //calculate next deadline and display it
                             for ($j = 0;$j <$num_phases; $j++){
                                 $phase = $myphases->fetch_assoc();
+                                $next_deadline = "Ultima scadenza già passata";
                                 if (date("Y-m-d")>=$phase['start'] && date("Y-m-d")<=$phase['end']){
-                                    $next_deadline = $phase['name'].", fra ".date_diff(date_create(date("Y-m-d")), date_create($phase['end']))->format('%a');
+                                    $next_deadline = $phase['name'].", fra ".date_diff(date_create(date("Y-m-d")), date_create($phase['end']))->format('%a')." giorni";
                                 }
                                 if (date("Y-m-d")>=$phase['start'] && $phase['complete']==0){
                                     echo "<div class='finished_phase'>";
@@ -230,8 +238,8 @@ $row = $mydata->fetch_assoc();
                                                     </div>
                                                 </div>
                                                 <div class=\"modal-footer\">
-                                                    <button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Close</button>
-                                                    <button type=\"button\"  class=\"btn btn-primary\">Save changes</button>
+                                                    <button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Chiudi</button>
+                                                    <button type=\"button\" onclick=\"updatephase('0','".$phase['id']."','".$i."')\" data-dismiss=\"modal\" class=\"btn btn-primary\">Salva modifiche</button>
                                                 </div>
                                             </div>
                                         </div>";
