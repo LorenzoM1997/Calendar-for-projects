@@ -214,6 +214,9 @@ $row = $mydata->fetch_assoc();
                             for ($j = 0;$j <$num_phases; $j++){
                                 $phase = $myphases->fetch_assoc();
                                 $next_deadline = "Ultima scadenza già passata";
+                                if (date("Y-m-d")<$phase['start']){
+                                    $next_deadline = $phase['name'].", fra ".date_diff(date_create(date("Y-m-d")), date_create($phase['end']))->format('%a')." giorni";
+                                }
                                 if (date("Y-m-d")>=$phase['start'] && date("Y-m-d")<=$phase['end']){
                                     $next_deadline = $phase['name'].", fra ".date_diff(date_create(date("Y-m-d")), date_create($phase['end']))->format('%a')." giorni";
                                 }
