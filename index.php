@@ -277,8 +277,8 @@
                                                     </div>
                                                 </div>
                                                 <div class=\"modal-footer\">
-                                                    <button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Close</button>
-                                                    <button type=\"button\" onclick=\"updatephase('0','".$phase['id']."','".$i."')\" class=\"btn btn-primary\">Save changes</button>
+                                                    <button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Chiudi</button>
+                                                    <button type=\"button\" onclick=\"updatephase('0','".$phase['id']."','".$i."')\" data-dismiss=\"modal\" class=\"btn btn-primary\">Salva modifiche</button>
                                                 </div>
                                             </div>
                                         </div>";
@@ -294,7 +294,7 @@
                                     <div class=\"form-group\">
                                     <input type='hidden' name='id' value='".$row['id']."'>
                                         <label for=\"title_phase\"></label>
-                                        <input type=\"text\" name=\"title_phase\" class=\"form-control\" id=\"title_phase\" aria-describedby=\"emailHelp\" placeholder=\"Inserisci titolo\">
+                                        <input type=\"text\" name=\"title_phase\" class=\"form-control\" id=\"title_phase\" aria-describedby=\"emailHelp\" placeholder=\"Inserisci nuova fase...\">
                                     </div>
                                     <div class=\"form-group row\">
                                         <label for=\"start\" class=\"col-2 col-form-label\">Data inizio</label>
@@ -332,6 +332,7 @@
             </div>
         </div>
         <script>
+            var new_end_date = document.getElementById("update_end").value;
             function updatephase(completeness,id,id_proj) {
                 if (window.XMLHttpRequest) {
                     xmlhttp = new XMLHttpRequest();
